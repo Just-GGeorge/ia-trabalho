@@ -15,26 +15,34 @@ class  GameState():
             ["--","--","--","--","--","--","--","--","--","--","--"],
             ["bR","--","--","--","--","wR","--","--","--","--","bR"],
             ["bR","--","--","--","wR","wR","wR","--","--","--","bR"],
-            ["bR","bR","--","wR","wR","wR","wR","wR","--","bR","bR"],
+            ["bR","bR","--","wR","wR","wK","wR","wR","--","bR","bR"],
             ["bR","--","--","--","wR","wR","wR","--","--","--","bR"],
             ["bR","--","--","--","--","wR","--","--","--","--","bR"],
             ["--","--","--","--","--","--","--","--","--","--","--"],
             ["--","--","--","--","--","bR","--","--","--","--","--"],
             ["--","--","--","bR","bR","bR","bR","bR","--","--","--"]]
 
-        self.moveFunctions =  {'R':self.getRookMoves}
+        self.moveFunctions =  {'R':self.getRookMoves , 'K': self.getKingMoves}
 
         self.whiteToMove = True
         self.moveLog = []
+
+        self.whiteKingLocation = (5,5)
 
     def makeMove(self,move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move) # Log do movimento para poder cancelar voltar movimento
-        self.comeu(move)
+        self.ameaca_captura(move)
         self.whiteToMove = not self.whiteToMove # trocar qual player vai jogar
 
-    def verificaproximidade(self,linha,coluna):
+        #atualiza posicao do rei
+        if move.pieceMoved == "wK":
+            self.whiteKingLocation = (move.endRow,move.endCol)
+            #print("atualizou o rei", self.whiteKingLocation)
+        
+
+    def confirma_captura(self,linha,coluna):
         enemyColor = "w" if self.whiteToMove else "b"
         contador = 0
         
@@ -55,7 +63,7 @@ class  GameState():
                 self.board[linha[i]][coluna[i]] = "--"
             contador = 0
 
-    def comeu(self,move):
+    def ameaca_captura(self,move):
         log = self.moveLog[-1]
         linha = [move.endRow][0]
         coluna = [move.endCol][0]
@@ -84,7 +92,7 @@ class  GameState():
                 linha_verifica.append(linha)
                 coluna_verifica.append(coluna+1)
         if flag_captura:
-            self.verificaproximidade(linha_verifica,coluna_verifica)  
+            self.confirma_captura(linha_verifica,coluna_verifica)  
         linha_verifica = []
         coluna_verifica = []
 
@@ -122,6 +130,30 @@ class  GameState():
     '''
 
     def getRookMoves(self,r,c,moves):
+        #print("Valor de R e C que recebi",r,c)
+        directions = ((-1,0),(0,-1),(1,0),(0,1))
+        enemyColor = "b" if self.whiteToMove else "w"
+        for d in directions:
+            for i in range (1,len(self.board)):
+                endRow = r + d[0] * i
+                endCol = c + d[1] * i
+                if 0 <= endRow < 11 and 0 <= endCol < 11:
+                    if (endRow,endCol) not in ((0,0),(0,10),(10,0),(10,10),(5,5)):
+                        endPiece = self.board[endRow][endCol]
+                        
+                    else:
+                        break
+                    if endPiece == "--": # espaço vazio
+                        moves.append(Move((r,c),(endRow,endCol),self.board))
+                    #elif endPiece[0] == enemyColor: # movimento para capturar
+                        #moves.append(Move((r,c),(endRow,endCol),self.board))
+                        #break
+                    else:
+                        break
+                else:
+                    break
+            
+    def getKingMoves(self,r,c,moves):
         directions = ((-1,0),(0,-1),(1,0),(0,1))
         enemyColor = "b" if self.whiteToMove else "w"
         for d in directions:
@@ -139,7 +171,6 @@ class  GameState():
                         break
                 else:
                     break
-            
 
 class Move():
 
