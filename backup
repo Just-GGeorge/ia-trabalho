@@ -1,0 +1,37 @@
+def ameaca_captura(self,move):
+        log = self.moveLog[-1]
+        linha = [move.endRow][0]
+        coluna = [move.endCol][0]
+        linha_verifica = []
+        coluna_verifica = []
+        enemyColor = "b" if self.whiteToMove else "w"
+        flag_captura = False
+        if (linha + 1) < 11:
+            if self.board[linha+1][coluna][0] == enemyColor:
+                flag_captura = True
+                linha_verifica.append(linha+1)
+                coluna_verifica.append(coluna)
+        if (linha - 1) >= 0: 
+            if self.board[linha-1][coluna][0] == enemyColor:
+                flag_captura = True
+                linha_verifica.append(linha-1)
+                coluna_verifica.append(coluna)
+        if (coluna + 1) < 11:
+            if self.board[linha][coluna-1][0] == enemyColor:
+                flag_captura = True
+                linha_verifica.append(linha)
+                coluna_verifica.append(coluna+1)
+        if (coluna -1) >= 0:
+            if self.board[linha][coluna+1][0] == enemyColor:
+                flag_captura = True
+                linha_verifica.append(linha)
+                coluna_verifica.append(coluna-1)
+        if flag_captura:
+            capturado = self.confirma_captura(linha_verifica,coluna_verifica)
+            print(linha_verifica,coluna_verifica)
+        else:
+            capturado = (99,99)
+        return capturado
+            
+        linha_verifica = []
+        coluna_verifica = []
