@@ -33,7 +33,7 @@ def main():
     running = True
     sqSelected = () # definir o quadrado qual usuario cliclou inicia como nenhum
     playerClicks = [] #mantem o registro dos clicks mover peao que inicial está (4,4) para (5,4) 0 = x 1 = y
-    playerOne = True
+    playerOne = True #False a IA joga True o jogador joga
     playerTwo = False
     gameOver = False
     while running:
@@ -129,6 +129,14 @@ faz highlight dos quadrados possiveis para movimentar
 '''
 
 def highlightSquares(screen,gs,validMoves,sqSelected):
+    
+    if (len(gs.moveLog)) > 0:
+        last_move = gs.moveLog[-1]
+        s = p.Surface((SQ_SIZE, SQ_SIZE))
+        s.set_alpha(100)
+        s.fill(p.Color('yellow'))
+        screen.blit(s, (last_move.endCol * SQ_SIZE, last_move.endRow * SQ_SIZE))
+
     if sqSelected != ():
         r , c = sqSelected
         if gs.board[r][c][0] == ('w' if  gs.whiteToMove else 'b'): # quadrado selecionado é uma peça q pode mover

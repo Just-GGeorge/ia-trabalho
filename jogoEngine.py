@@ -18,7 +18,7 @@ class  GameState():
             ["--","--","--","--","--","--","--","--","--","--","--"],
             ["bR","--","--","--","--","wR","--","--","--","--","bR"],
             ["bR","--","--","--","wR","wR","wR","--","--","--","bR"],
-            ["bR","bR","--","wR","wR","wK","wR","--","--","bR","bR"],
+            ["bR","bR","--","wR","wR","wK","wR","wR","--","bR","bR"],
             ["bR","--","--","--","wR","wR","wR","--","--","--","bR"],
             ["bR","--","--","--","--","wR","--","--","--","--","bR"],
             ["--","--","--","--","--","--","--","--","--","--","--"],
@@ -236,7 +236,7 @@ class  GameState():
                 if (self.board[row[i]][col[i]-1] != "--"):
                     controle[3] = True
             if False not in controle:
-                contador = contador + 1
+                pass
                 #print("entro",controle)
             if contador >= 2:
                 if (contador >= 2) and self.board[row[i]][col[i]]!= "wK":
