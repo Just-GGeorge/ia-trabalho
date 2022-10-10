@@ -34,7 +34,7 @@ def main():
     sqSelected = () # definir o quadrado qual usuario cliclou inicia como nenhum
     playerClicks = [] #mantem o registro dos clicks mover peao que inicial está (4,4) para (5,4) 0 = x 1 = y
     playerOne = True
-    playerTwo = True
+    playerTwo = False
     gameOver = False
     while running:
         humanturn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
@@ -84,7 +84,7 @@ def main():
             
         #IA move
         if not gameOver and not humanturn:
-            AIMove = SmartMoveFinder.findBestMoveNegaMax(gs,validMoves)
+            AIMove = SmartMoveFinder.findBestMoveNegaMaxAlphaBeta(gs,validMoves)
             if AIMove is None:
                 AImove = SmartMoveFinder.findRandomMove(validMoves)
             gs.makeMove(AIMove)
@@ -99,9 +99,19 @@ def main():
         
         drawGameState(screen,gs,validMoves, sqSelected)
 
-        if gs.checkMate:
+        if gs.checkMate :
             gameOver = True
             if gs.whiteToMove:
+                drawText(screen, 'Mercenarios ganharam rei capturado')
+            else:
+                drawText(screen, 'Soldados ganharam rei chegou no refugio')
+        elif gs.staleMate:
+            gameOver = True
+            drawText(screen, 'StaleMate')
+
+        if gs.ReiInCheck:
+            gameOver = True
+            if not gs.whiteToMove:
                 drawText(screen, 'Mercenarios ganharam rei capturado')
             else:
                 drawText(screen, 'Soldados ganharam rei chegou no refugio')

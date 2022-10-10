@@ -15,10 +15,10 @@ class  GameState():
 
             ["--","--","--","bR","bR","bR","bR","bR","--","--","--"],
             ["--","--","--","--","--","bR","--","--","--","--","--"],
-            ["--","wK","--","--","--","--","--","--","--","--","--"],
-            ["--","--","--","--","--","wR","--","--","--","--","bR"],
+            ["--","--","--","--","--","--","--","--","--","--","--"],
+            ["bR","--","--","--","--","wR","--","--","--","--","bR"],
             ["bR","--","--","--","wR","wR","wR","--","--","--","bR"],
-            ["bR","bR","--","wR","wR","wK","wR","wR","--","bR","bR"],
+            ["bR","bR","--","wR","wR","wK","wR","--","--","bR","bR"],
             ["bR","--","--","--","wR","wR","wR","--","--","--","bR"],
             ["bR","--","--","--","--","wR","--","--","--","--","bR"],
             ["--","--","--","--","--","--","--","--","--","--","--"],
@@ -30,6 +30,7 @@ class  GameState():
         self.whiteToMove = True
         self.moveLog = []
         self.coordCaptura = []
+        self.pecaCapturada = []
         self.limites = ((0,0),(0,10),(10,0),(10,10),(5,5))
         self.refugio = ((0,0),(0,10),(10,0),(10,10))
         self.whiteKingLocation = (5,5)
@@ -42,7 +43,7 @@ class  GameState():
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
         self.moveLog.append(move) # Log do movimento para poder cancelar voltar movimento
-        self.coordCaptura.append(self.ameaca_captura(move))
+        self.coordCaptura.append(self.capture(move))
         self.whiteToMove = not self.whiteToMove # trocar qual player vai jogar
 
         #atualiza posicao do rei
@@ -57,21 +58,21 @@ class  GameState():
         if len(self.moveLog) != 0:
             move = self.moveLog.pop() # remove ultimo elemento e passa valor para variavel se estiver sendo atribuida como esse caso
             self.board[move.startRow][move.startCol] = move.pieceMoved
-            #if len(self.coordCaptura) > 0:
-               # capturado = self.coordCaptura.pop()
-            #self.board[move.endRow][move.endCol] = move.pieceCaptured
+            peça = ""
             self.whiteToMove = not self.whiteToMove 
-            #capturado = self.coordCaptura.pop()
             if len(self.coordCaptura) > 0:
                 capturado = self.coordCaptura.pop()
+                if len(self.pecaCapturada) > 0:
+                    peça = self.pecaCapturada.pop()
+                
             if capturado != (99,99):
                 if self.whiteToMove:
                     self.board[capturado[0]][capturado[1]] = "bR"
                     self.board[move.endRow][move.endCol] = "--"
                 else:
-                    if self.board[capturado[0]][capturado[1]] != "wK":
-                        self.board[capturado[0]][capturado[1]] = "wR"
-                    self.board[move.endRow][move.endCol] = "--"
+                    if len(peça)> 0:
+                        self.board[capturado[0]][capturado[1]] = peça
+                self.board[move.endRow][move.endCol] = "--"
                     #a = ([capturado[0]],[capturado[1]])
                     #print("aki que foi",self.board[2][0])
             else:
@@ -101,7 +102,7 @@ class  GameState():
                 #print("Acabou o jogo")
             else:
                 self.staleMate = True
-        else:
+        if len(moves) == 0:
             self.checkMate = False
             self.staleMate = False
         return moves # por enquanto
@@ -145,9 +146,7 @@ class  GameState():
                             moves.append(Move((r,c),(endRow,endCol),self.board))
                         if (self.board[r][c][0] == "b" and not self.whiteToMove):
                             moves.append(Move((r,c),(endRow,endCol),self.board))
-                    #elif endPiece[0] == enemyColor: # movimento para capturar
-                        #moves.append(Move((r,c),(endRow,endCol),self.board))
-                        #break
+                    
                     else:
                         break
                 else:
@@ -155,7 +154,6 @@ class  GameState():
             
     def getKingMoves(self,r,c,moves):
         directions = ((-1,0),(0,-1),(1,0),(0,1))
-        enemyColor = "b" if self.whiteToMove else "w"
         if self.whiteToMove:
             for d in directions:
                 for i in range (1,len(self.board)):
@@ -165,9 +163,7 @@ class  GameState():
                         endPiece = self.board[endRow][endCol]
                         if endPiece == "--": # espaço vazio
                             moves.append(Move((r,c),(endRow,endCol),self.board))
-                        #elif endPiece[0] == enemyColor: # movimento para capturar
-                            #moves.append(Move((r,c),(endRow,endCol),self.board))
-                            #break
+                        
                         else:
                             break
                     else:
@@ -175,7 +171,7 @@ class  GameState():
 
 
 
-    def ameaca_captura(self,move):
+    def capture(self,move):
         linha = [move.endRow][0]
         coluna = [move.endCol][0]
         linha_verifica = []
@@ -203,40 +199,55 @@ class  GameState():
                 linha_verifica.append(linha)
                 coluna_verifica.append(coluna-1)
         if flag_captura:
-            capturado = self.confirma_captura(linha_verifica,coluna_verifica)
+            capturado = self.confirm_capture(linha_verifica,coluna_verifica)
         else:
             capturado = (99,99)
         return capturado
 
 
-    def confirma_captura(self,linha,coluna):
+    def confirm_capture(self,row,col):
         enemyColor = "w" if self.whiteToMove else "b"
         contador = 0
-    
-        for i in range(len(linha)):
-            if (linha[i] + 1) < 11:
-                if (self.board[linha[i]+1][coluna[i]][0]) == enemyColor and (linha[i]+1,coluna[i]) not in self.limites:
+        controle = [False,False,False,False]
+        for i in range(len(row)):
+            controle = [False,False,False,False]
+            if (row[i] + 1) < 11:
+                if (self.board[row[i]+1][col[i]][0]) == enemyColor and (row[i]+1,col[i]) not in self.refugio:
                     contador += 1
-            if (linha[i] - 1) >= 0: 
-                if self.board[linha[i]-1][coluna[i]][0] == enemyColor and (linha[i] - 1,coluna[i]) not in self.limites :
+                #if (row[i]+1,col[i]) in self.limites:
+                if (self.board[row[i]+1][col[i]] != "--"):
+                    controle[0] = True
+            if (row[i] - 1) >= 0: 
+                if self.board[row[i]-1][col[i]][0] == enemyColor and (row[i] - 1,col[i]) not in self.refugio :
                     contador += 1
-            if (coluna[i] + 1) < 11:
-                if self.board[linha[i]][coluna[i]+1][0] == enemyColor and(linha[i],coluna[i]+1) not in self.limites :
+                #if (row[i] - 1,col[i]) in self.limites:
+                if (self.board[row[i]-1][col[i]] != "--"):
+                    controle[1] = True
+            if (col[i] + 1) < 11:
+                if self.board[row[i]][col[i]+1][0] == enemyColor and(row[i],col[i]+1) not in self.refugio :
                     contador += 1
-            if (coluna[i] - 1 ) >= 0:
-                if self.board[linha[i]][coluna[i]-1][0] == enemyColor and (linha[i],coluna[i]-1) not in self.limites:
+                #if (row[i],col[i]+1)  in self.limites:
+                if (self.board[row[i]][col[i]+1] != "--"):
+                    controle[2] = True
+            if (col[i] - 1 ) >= 0:
+                if self.board[row[i]][col[i]-1][0] == enemyColor and (row[i],col[i]-1) not in self.refugio:
                     contador += 1
+                #if (row[i],col[i]-1) in self.limites:
+                if (self.board[row[i]][col[i]-1] != "--"):
+                    controle[3] = True
+            if False not in controle:
+                contador = contador + 1
+                #print("entro",controle)
             if contador >= 2:
-                if (contador == 2) and self.board[linha[i]][coluna[i]]!= "wK":
-                    self.board[linha[i]][coluna[i]] = "--"
-                    return (linha[i],coluna[i])
-                if (contador == 3) and self.board[linha[i]][coluna[i]]== "wK":
+                if (contador >= 2) and self.board[row[i]][col[i]]!= "wK":
+                    self.board[row[i]][col[i]] = "--"
+                    self.pecaCapturada.append("wR" if not self.whiteToMove else "bR")
+                    return (row[i],col[i])
+                if (contador == 4) and self.board[row[i]][col[i]]== "wK":
+                    self.board[row[i]][col[i]] = "--"
+                    self.pecaCapturada.append("wK")
                     self.ReiInCheck = True
-                    return (linha[i],coluna[i])
-                if (contador == 4) and self.board[linha[i]][coluna[i]]== "wK":
-                    self.board[linha[i]][coluna[i]] = "--"
-                    self.checkMate = True
-                    return (linha[i],coluna[i])
+                    return (row[i],col[i])
             contador = 0
         return (99,99)
 

@@ -1,9 +1,9 @@
 import random
 
-pieceScore = {"K":0 , "Q":10,"R":5,"B":3,"N":3,"p":1}
+pieceScore = {"K":0 ,"R":5}
 CHECKMATE = 1000
 STALEMATE = 0
-DEPTH = 1
+DEPTH = 2
 
 
 
@@ -14,32 +14,36 @@ def findBestMoveMinMax(gs,validMoves):
     findMoveMinMax(gs, validMoves , DEPTH, gs.whiteToMove)
     return nextMove
 
-def findBestMoveNegaMax(game_state, valid_moves):
+   
+def findBestMoveNegaMaxAlphaBeta(game_state, valid_moves):
     global next_move
     next_move = None
     random.shuffle(valid_moves)
-    findMoveNegaMax(game_state, valid_moves, DEPTH, 1 if game_state.whiteToMove else -1)
+    findMoveNegaMaxAlphaBeta(game_state, valid_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if game_state.whiteToMove else -1)
     return next_move 
 
 
-
-def findMoveNegaMax(gs, valid_moves, depth, turn_multiplier):
+def findMoveNegaMaxAlphaBeta(game_state, valid_moves, depth, alpha, beta, turn_multiplier):
     global next_move
     if depth == 0:
-        return turn_multiplier * scoreBoard(gs)
+        return turn_multiplier * scoreBoard(game_state)
 
+    #move ordering - implement later //TODO
     max_score = -CHECKMATE
     for move in valid_moves:
-        gs.makeMove(move)
-        next_moves = gs.getValidMoves()
-        score = -findMoveNegaMax(gs, next_moves, depth - 1, -turn_multiplier)
+        game_state.makeMove(move)
+        next_moves = game_state.getValidMoves()
+        score = -findMoveNegaMaxAlphaBeta(game_state, next_moves, depth - 1, -beta, -alpha, -turn_multiplier)
         if score > max_score:
             max_score = score
             if depth == DEPTH:
                 next_move = move
-        gs.undoMove()
+        game_state.undoMove()
+        if max_score > alpha:
+            alpha = max_score
+        if alpha >= beta:
+            break
     return max_score
-
 
 def findMoveMinMax(gs, validMoves, depth, whiteToMove):
     global nextMove 
