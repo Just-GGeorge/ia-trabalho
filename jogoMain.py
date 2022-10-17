@@ -8,8 +8,9 @@ import jogoEngine , SmartMoveFinder
 WIDTH = HEIGHT  = 512
 DIMENSION = 11
 SQ_SIZE = HEIGHT // DIMENSION
-MAX_FPS = 15
+MAX_FPS = 20
 IMAGES ={}
+SALVO = 37
 
 def loadImages():
     pieces = ['wR','wK','bR']
@@ -85,7 +86,7 @@ def main():
         #IA move
         if not gameOver and not humanturn:
             AIMove = SmartMoveFinder.findBestMoveNegaMaxAlphaBeta(gs,validMoves)
-            if AIMove is None:
+            if AIMove is not None:
                 AImove = SmartMoveFinder.findRandomMove(validMoves)
             gs.makeMove(AIMove)
             moveMade = True
@@ -160,6 +161,7 @@ def drawGameState(screen,gs,validMoves, sqSelected):
     drawBoard(screen) # desenha os quadrado do tabuleiro
     highlightSquares(screen,gs,validMoves, sqSelected)
     drawPieces(screen, gs.board)
+  
 
 '''
 desenha os quadrados

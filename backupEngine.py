@@ -31,7 +31,6 @@ class  GameState():
         self.moveLog = []
         self.coordCaptura = []
         self.pecaCapturada = []
-        self.teveCaptura = False
         self.limites = ((0,0),(0,10),(10,0),(10,10),(5,5))
         self.refugio = ((0,0),(0,10),(10,0),(10,10))
         self.whiteKingLocation = (5,5)
@@ -43,19 +42,14 @@ class  GameState():
     def makeMove(self,move):
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.pieceMoved
-        self.teveCaptura = False
         self.moveLog.append(move) # Log do movimento para poder cancelar voltar movimento
-        self.capture(move)
-        
+        self.coordCaptura.append(self.capture(move))
         self.whiteToMove = not self.whiteToMove # trocar qual player vai jogar
 
         #atualiza posicao do rei
         if move.pieceMoved == "wK":
             self.whiteKingLocation = (move.endRow,move.endCol)
-        flag_capturado  = self.teveCaptura
-        if flag_capturado == False:
-                self.coordCaptura.append((99,99))
-                self.pecaCapturada.append("--")
+        
 
     
 
@@ -64,24 +58,26 @@ class  GameState():
         if len(self.moveLog) != 0:
             move = self.moveLog.pop() # remove ultimo elemento e passa valor para variavel se estiver sendo atribuida como esse caso
             self.board[move.startRow][move.startCol] = move.pieceMoved
+            peça = ""
             self.whiteToMove = not self.whiteToMove 
-            if len(self.pecaCapturada) > 0:
-                peca_capturada = self.pecaCapturada.pop()
-                coordenada_capturada = self.coordCaptura.pop()
-            else:
-                peca_capturada = "--"
-                coordenada_capturada = (99,99)
-            if coordenada_capturada != (99,99):
+            if len(self.coordCaptura) > 0:
+                capturado = self.coordCaptura.pop()
+                if len(self.pecaCapturada) > 0:
+                    peça = self.pecaCapturada.pop()
+                
+            if capturado != (99,99):
                 if self.whiteToMove:
-                    self.board[coordenada_capturada[0]][coordenada_capturada[1]] = peca_capturada
+                    self.board[capturado[0]][capturado[1]] = "bR"
                     self.board[move.endRow][move.endCol] = "--"
                 else:
-                    if len(peca_capturada)> 0:
-                        self.board[coordenada_capturada[0]][coordenada_capturada[1]] = peca_capturada
+                    if len(peça)> 0:
+                        self.board[capturado[0]][capturado[1]] = peça
                 self.board[move.endRow][move.endCol] = "--"
-                    
+                    #a = ([capturado[0]],[capturado[1]])
+                    #print("aki que foi",self.board[2][0])
             else:
                 self.board[move.endRow][move.endCol] = move.pieceCaptured
+                #print("aki erro")
 
             
 
@@ -92,8 +88,6 @@ class  GameState():
     '''
     def getValidMoves(self):
         moves = self.getAllPossibleMoves()
-        #return moves
-        
         for i in range(len(moves)-1,-1,-1):
             self.makeMove(moves[i])
 
@@ -108,21 +102,22 @@ class  GameState():
                 #print("Acabou o jogo")
             else:
                 self.staleMate = True
-        else:
+        if len(moves) == 0:
             self.checkMate = False
             self.staleMate = False
-            #print("fake")
         return moves # por enquanto
         #moves = self.getAllPossibleMoves()
 
+    
     #movimentos que nao consideram checks mate
     
     def getAllPossibleMoves(self):
         moves = []
-        ally = "w" if self.whiteToMove else "b"
+
         for r in range(len(self.board)): # linhas 
             for c in range (len(self.board[r])): # colunas
-                if self.board[r][c][0] == ally:
+                turn = self.board[r][c][0]
+                if (turn == "w" and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):
                     piece = self.board[r][c][1]
                     self.moveFunctions[piece](r,c,moves) # vai chamar função de movimentos de acordo com tipo da peça
         return moves
@@ -204,18 +199,16 @@ class  GameState():
                 linha_verifica.append(linha)
                 coluna_verifica.append(coluna-1)
         if flag_captura:
-            #print("peça ameaçada")
-            self.confirm_capture(linha_verifica,coluna_verifica)
-        #else:
-           # capturado = (99,99)
-        #return capturado
+            capturado = self.confirm_capture(linha_verifica,coluna_verifica)
+        else:
+            capturado = (99,99)
+        return capturado
 
 
     def confirm_capture(self,row,col):
         enemyColor = "w" if self.whiteToMove else "b"
         contador = 0
         controle = [False,False,False,False]
-        flag_capturado = False
         for i in range(len(row)):
             controle = [False,False,False,False]
             if (row[i] + 1) < 11:
@@ -249,20 +242,15 @@ class  GameState():
                 if (contador >= 2) and self.board[row[i]][col[i]]!= "wK":
                     self.board[row[i]][col[i]] = "--"
                     self.pecaCapturada.append("wR" if not self.whiteToMove else "bR")
-                    self.coordCaptura.append((row[i],col[i]))
-                    self.teveCaptura = True
-                    #return (row[i],col[i])
+                    return (row[i],col[i])
                 if (contador == 4) and self.board[row[i]][col[i]]== "wK":
                     self.board[row[i]][col[i]] = "--"
                     self.pecaCapturada.append("wK")
                     self.ReiInCheck = True
-                    self.teveCaptura = True
-                    self.coordCaptura.append((row[i],col[i]))
-                    #return (row[i],col[i])
+                    return (row[i],col[i])
             contador = 0
-            
-            flag_capturado = False
-        #return (99,99)
+        self.pecaCapturada.append("--")
+        return (99,99)
 
     
 
@@ -283,6 +271,7 @@ class  GameState():
             a = (move.endRow,move.endCol)
             if self.board[move.startRow][move.startCol] == "wK":
                 if a in self.refugio:
+                    #print("Jogo pode acabar") # quadrado esta sobre ataque
                     return True
         return False
 
@@ -313,7 +302,11 @@ class Move():
         self.pieceMoved = board[self.startRow][self.startCol]
         
         self.pieceCaptured = board[self.endRow][self.endCol]
- 
+        #if captura_sq[0] != 99:
+                #self.pieceCaptured = board[self.endRow][self.endCol]
+        #else: 
+            #self.pieceMoved = board[self.startRow][self.startCol]
+
         self.moveID= self.startRow * 100000 + self.startCol * 10000 + self.endRow * 1000 + 10 * self.endCol
 
     def __eq__(self,other):

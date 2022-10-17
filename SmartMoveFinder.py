@@ -4,7 +4,7 @@ pieceScore = {"K":0 ,"R":5}
 CHECKMATE = 1000
 STALEMATE = 0
 DEPTH = 2
-
+DIST = 99
 
 
 
@@ -59,7 +59,6 @@ def findMoveNegaMaxAlphaBeta(game_state, valid_moves, depth, alpha, beta, turn_m
     if depth == 0:
         return turn_multiplier * scoreBoard(game_state)
 
-    #move ordering - implement later //TODO
     max_score = -CHECKMATE
     for move in valid_moves:
         game_state.makeMove(move)
@@ -96,7 +95,23 @@ def scoreBoard(gs):
                 score = score + pieceScore[square[1]]
             elif square[1] == "b":
                 score -= pieceScore[square[1]]
-    return score
+
+    extra = kingToRefuge(gs)
+    if gs.whiteToMove:
+        return score +(score - extra )
+    else:
+        return score
+
+def kingToRefuge(gs):
+    global DIST
+    rei = gs.whiteKingLocation
+    if gs.whiteToMove:
+        for i in gs.refugio:
+            if ((i[0] - rei[0]) + (i[1] - rei[1])) < DIST:
+                DIST = abs (i[0] - rei[0]) + abs (i[1] - rei[1])
+                return DIST
+    else:
+        return 0
 
 
 def findRandomMove(validMoves):
